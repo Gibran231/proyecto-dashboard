@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" fill="none" stroke="#00b4d8" stroke-width="2.5" stroke-linejoin="round">
+  <!-- Simplified silhouette of New York State -->
+  <polyline points="
+    18,8 24,6 34,10 40,8 46,12 52,10 58,14 66,12 72,16
+    78,14 84,18 90,16 96,20 102,18 106,24 104,30
+    100,36 96,42 92,48 88,54 84,60 80,66 76,72
+    72,76 68,80 64,84 60,88 56,84 52,80
+    48,76 44,72 40,68 36,64 32,60 28,56
+    24,52 20,48 16,44 12,40 10,34
+    12,28 14,22 18,8
+  "/>
+  <!-- NYC area hint -->
+  <circle cx="72" cy="82" r="4" fill="#00b4d8" opacity=".6"/>
+</svg>

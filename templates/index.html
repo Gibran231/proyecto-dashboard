@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Ambiental y de Salud — New York</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<div class="sidebar">
+
+  <h2>Dashboard</h2>
+
+  <button id="btn-aire" class="sidebar-btn activo" onclick="mostrarModulo('aire')">
+    🌫 Calidad del Aire
+  </button>
+
+  <button id="btn-salud" class="sidebar-btn" onclick="mostrarModulo('salud')">
+    🏥 Salud
+  </button>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-info">
+    <p>New York City</p>
+    <small>Datos ambientales y de salud</small>
+  </div>
+
+</div>
+
+<!-- ===================== CONTENIDO ===================== -->
+<div class="contenido">
+
+  <!-- ==================== HEADER ==================== -->
+  <div class="header">
+    <div>
+      <h1 class="titulo" id="titulo-modulo">Calidad del Aire en New York</h1>
+      <p class="subtitulo" id="subtitulo-modulo">Índice de Calidad del Aire · Monitoreo ambiental</p>
+    </div>
+    <img class="logo-ny" src="{{ url_for('static', filename='img/ny-outline.svg') }}" alt="NY">
+  </div>
+
+
+  <!-- ============================================================ -->
+  <!-- MÓDULO: CALIDAD DEL AIRE                                      -->
+  <!-- ============================================================ -->
+  <div id="modulo-aire">
+
+    <!-- FILTROS AIRE -->
+    <div class="filtros">
+      <div class="filtro-grupo">
+        <label>Año</label>
+        <select id="anio"></select>
+      </div>
+      <div class="filtro-grupo">
+        <label>Contaminante</label>
+        <select id="contaminante"></select>
+      </div>
+      <div class="filtro-grupo">
+        <label>Tipo de zona</label>
+        <select id="tipoZona"></select>
+      </div>
+      <button id="actualizar" class="btn-primary">Actualizar</button>
+    </div>
+
+    <!-- KPI CARDS AIRE -->
+    <div class="cards">
+      <div class="card">
+        <h3>ICA Máximo</h3>
+        <p id="maximo">—</p>
+      </div>
+      <div class="card">
+        <h3>ICA Promedio</h3>
+        <p id="promedio">—</p>
+      </div>
+      <div class="card">
+        <h3>Zona más contaminada</h3>
+        <p id="zona">—</p>
+      </div>
+    </div>
+
+    <!-- TABLA AIRE -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h2>Índice de Calidad del Aire por Zona</h2>
+        <input id="buscar" placeholder="🔍 Buscar zona…">
+      </div>
+
+      <div class="tabla-scroll">
+        <table id="air-table">
+          <thead>
+            <tr>
+              <th>Zona</th>
+              <th>Estatus</th>
+              <th>ICA</th>
+              <th>Medición</th>
+              <th>Unidad</th>
+            </tr>
+          </thead>
+          <tbody id="tablaDatos">
+            <tr><td colspan="5">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MAPA DE CALOR — CALIDAD DEL AIRE -->
+    <div class="seccion">
+      <h2>🗺️ Mapa de Calor — Índice de Calidad del Aire por Zona</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
+        Usa los mismos filtros de la sección superior (Tipo de zona, Año, Contaminante).
+        <button id="mc-a-actualizar" class="btn-primary" style="margin-left:12px;">Actualizar mapa de calor</button>
+      </p>
+      <div class="mapa-calor-container">
+        <div id="mapa-calor-aire"></div>
+      </div>
+    </div>
+
+    <!-- GRÁFICAS AIRE -->
+    <div class="graficas">
+      <div class="grafica-box">
+        <h3>Presencia del contaminante por zona</h3>
+        <canvas id="presencia"></canvas>
+      </div>
+      <div class="grafica-box">
+        <h3>Proyección histórica</h3>
+        <canvas id="proyeccion"></canvas>
+      </div>
+    </div>
+
+    <!-- PANEL INFERIOR AIRE -->
+    <div class="cards cards-2">
+      <div class="card">
+        <h3>Zona con más riesgo</h3>
+        <p id="riesgo">—</p>
+      </div>
+      <div class="card">
+        <h3>Contaminante dominante</h3>
+        <p id="dominante">—</p>
+      </div>
+    </div>
+
+  </div><!-- /modulo-aire -->
+
+
+  <!-- ============================================================ -->
+  <!-- MÓDULO: SALUD                                                 -->
+  <!-- ============================================================ -->
+  <div id="modulo-salud" style="display:none;">
+
+    <!-- FILTROS SALUD -->
+    <div class="filtros">
+      <div class="filtro-grupo">
+        <label>Año</label>
+        <select id="s-anio"><option value="">Todos</option></select>
+      </div>
+      <div class="filtro-grupo">
+        <label>Contaminante</label>
+        <select id="s-contaminante"><option value="">Todos</option></select>
+      </div>
+      <div class="filtro-grupo">
+        <label>Zona</label>
+        <select id="s-zona"><option value="">Todas</option></select>
+      </div>
+      <div class="filtro-grupo">
+        <label>Indicador de salud</label>
+        <select id="s-salud"><option value="">Todos</option></select>
+      </div>
+      <button id="s-actualizar" class="btn-primary">Actualizar</button>
+    </div>
+
+    <!-- KPI CARDS SALUD -->
+    <div class="cards cards-salud">
+      <div class="card card-salud">
+        <h3>Total registros</h3>
+        <p id="s-total">—</p>
+      </div>
+      <div class="card card-salud">
+        <h3>Zona de mayor impacto</h3>
+        <p id="s-zona-impacto">—</p>
+      </div>
+      <div class="card card-salud">
+        <h3>Contaminante principal</h3>
+        <p id="s-contaminante-mayor">—</p>
+      </div>
+      <div class="card card-salud card-riesgo">
+        <h3>Registros relacionados con muertes</h3>
+        <p id="s-muertes">—</p>
+      </div>
+      <div class="card card-salud card-hosp">
+        <h3>Registros de hospitalizaciones</h3>
+        <p id="s-hosp">—</p>
+      </div>
+    </div>
+
+    <!-- GRÁFICAS SALUD KPI PRINCIPAL -->
+    <div class="graficas">
+      <div class="grafica-box">
+        <h3>Promedio por contaminante (salud)</h3>
+        <canvas id="s-grafica-barras"></canvas>
+      </div>
+      <div class="grafica-box">
+        <h3>Evolución histórica</h3>
+        <canvas id="s-grafica-linea"></canvas>
+      </div>
+    </div>
+
+    <!-- TABLA SALUD KPI PRINCIPAL -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h2>Detalle — Indicadores de Salud por Zona</h2>
+        <input id="s-buscar" placeholder="🔍 Buscar…">
+      </div>
+      <div class="tabla-scroll">
+        <table id="salud-table">
+          <thead>
+            <tr>
+              <th>Año</th>
+              <th>Zona</th>
+              <th>Contaminante</th>
+              <th>Indicador</th>
+              <th>Promedio</th>
+              <th>Registros</th>
+              <th>Ranking</th>
+            </tr>
+          </thead>
+          <tbody id="s-tablaDatos">
+            <tr><td colspan="7">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: MUERTES POR CONTAMINANTE -->
+    <div class="seccion">
+      <h2>💀 Contaminantes relacionados con Muertes</h2>
+
+      <div class="graficas">
+        <div class="grafica-box grafica-full">
+          <h3>Promedio de contaminación — indicadores de mortalidad</h3>
+          <canvas id="s-grafica-muertes"></canvas>
+        </div>
+      </div>
+
+      <div class="tabla-scroll">
+        <table id="muertes-table">
+          <thead>
+            <tr>
+              <th>Contaminante</th>
+              <th>Indicador Salud</th>
+              <th>Promedio</th>
+              <th>Total Registros</th>
+              <th>Ranking</th>
+            </tr>
+          </thead>
+          <tbody id="muertes-tbody">
+            <tr><td colspan="5">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: IMPACTO POR CONTAMINANTE -->
+    <div class="seccion">
+      <h2>⚠️ Impacto por Tipo de Contaminante</h2>
+
+      <div class="graficas">
+        <div class="grafica-box grafica-full">
+          <h3>Nivel de contaminación promedio por contaminante</h3>
+          <canvas id="s-grafica-impacto"></canvas>
+        </div>
+      </div>
+
+      <div class="tabla-scroll">
+        <table id="impacto-table">
+          <thead>
+            <tr>
+              <th>Contaminante</th>
+              <th>Promedio</th>
+              <th>Total Registros</th>
+              <th>Nivel de Riesgo</th>
+            </tr>
+          </thead>
+          <tbody id="impacto-tbody">
+            <tr><td colspan="4">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: TENDENCIA HOSPITALIZACIONES -->
+    <div class="seccion">
+      <h2>🏥 Tendencia Histórica de Hospitalizaciones</h2>
+
+      <div class="filtros filtros-mini">
+        <div class="filtro-grupo">
+          <label>Indicador de hospitalización</label>
+          <select id="s-indicador-hosp">
+            <option value="">Todos los indicadores</option>
+          </select>
+        </div>
+        <button id="s-filtrar-hosp" class="btn-primary">Filtrar</button>
+      </div>
+
+      <div class="grafica-box">
+        <canvas id="s-grafica-tendencia"></canvas>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: MAPA DE CALOR — SALUD -->
+    <div class="seccion">
+      <h2>🗺️ Mapa de Calor — Contaminación por Zona (Salud)</h2>
+
+      <div class="filtros-mapa-calor">
+        <div class="filtro-grupo">
+          <label>Contaminante</label>
+          <select id="mc-s-contaminante"><option value="">Todos</option></select>
+        </div>
+        <div class="filtro-grupo">
+          <label>Año</label>
+          <select id="mc-s-anio"><option value="">Todos los años</option></select>
+        </div>
+        <button id="mc-s-actualizar" class="btn-primary">Actualizar mapa</button>
+      </div>
+
+      <div class="mapa-calor-container">
+        <div id="mapa-calor-salud"></div>
+      </div>
+    </div>
+
+  </div><!-- /modulo-salud -->
+
+</div><!-- /contenido -->
+
+
+<!-- ===================== SCRIPTS ===================== -->
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/filtros.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mapa.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mapa_calor.js') }}"></script>
+<script src="{{ url_for('static', filename='js/graficas_aire.js') }}"></script>
+<script src="{{ url_for('static', filename='js/graficas_salud.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>
